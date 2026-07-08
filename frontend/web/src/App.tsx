@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuthStore } from './store/authStore';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { AnalysisPage } from './pages/AnalysisPage';
 import './index.css';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -23,7 +24,15 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route
+          path="/analysis"
+          element={
+            <ProtectedRoute>
+              <AnalysisPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
   );
