@@ -10,11 +10,9 @@ from .database import init_db, close_db
 from .logging_config import setup_logging
 
 # Import routers
-from .routers import analysis, projects, health
-
+from .routers import analysis, projects, health, auth
 
 setup_logging(settings.log_level)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,7 +24,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await close_db()
     print("👋 Application stopped")
-
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
@@ -56,11 +53,11 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(health.router)
+    app.include_router(auth.router, prefix="/api/v1")
     app.include_router(analysis.router, prefix="/api/v1")
     app.include_router(projects.router, prefix="/api/v1")
 
     return app
-
 
 # Create the app instance
 app = create_app()
