@@ -10,7 +10,8 @@ from .database import init_db, close_db
 from .logging_config import setup_logging
 
 # Import routers
-from .routers import analysis, projects, health, auth
+from .routers import health, auth, users, projects, analyses, sessions
+from .routers import analysis as analysis_old, projects as projects_old
 
 setup_logging(settings.log_level)
 
@@ -54,8 +55,10 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(health.router)
     app.include_router(auth.router, prefix="/api/v1")
-    app.include_router(analysis.router, prefix="/api/v1")
+    app.include_router(users.router, prefix="/api/v1")
     app.include_router(projects.router, prefix="/api/v1")
+    app.include_router(analyses.router, prefix="/api/v1")
+    app.include_router(sessions.router, prefix="/api/v1")
 
     return app
 
