@@ -1,0 +1,75 @@
+{
+  "name": "my-agent",
+  "version": "1.0.0-alpha",
+  "description": "Universal AI Software Engineering Agent - Cross-platform, IDE-agnostic, polyglot support",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "workspaces": [
+    "backend/api-gateway",
+    "backend/core",
+    "backend/services/*",
+    "backend/workers",
+    "frontend/web",
+    "frontend/desktop",
+    "frontend/mobile",
+    "plugins/vscode-extension",
+    "plugins/jetbrains-plugin",
+    "plugins/neovim-plugin",
+    "sdk/typescript-sdk",
+    "cli"
+  ],
+  "scripts": {
+    "setup": "npm run install-all && npm run init-db",
+    "install-all": "npm install && npm run install:backend && npm run install:frontend && npm run install:sdk",
+    "install:backend": "cd backend/core && pip install -r requirements.txt && cd ../api-gateway && npm install",
+    "install:frontend": "cd frontend/web && npm install && cd ../desktop && npm install && cd ../mobile && npm install",
+    "install:sdk": "cd sdk/python-sdk && pip install -e . && cd ../typescript-sdk && npm install",
+    "dev": "docker-compose -f deployment/docker-compose.yml up -d",
+    "dev:stop": "docker-compose -f deployment/docker-compose.yml down",
+    "dev:logs": "docker-compose -f deployment/docker-compose.yml logs -f",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend/core && docker build -t my-agent:core . && cd ../api-gateway && npm run build",
+    "build:frontend": "cd frontend/web && npm run build && cd ../desktop && npm run build",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --config jest.config.unit.js",
+    "test:integration": "jest --config jest.config.integration.js",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx && pylint backend/core",
+    "format": "prettier --write . && black backend/core",
+    "security": "npm audit && safety check",
+    "docs": "typedoc && sphinx-build -b html docs docs/_build",
+    "deploy:dev": "kubectl apply -f deployment/kubernetes/dev/",
+    "deploy:prod": "kubectl apply -f deployment/kubernetes/prod/",
+    "cli": "node cli/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "code-analysis",
+    "bug-fixing",
+    "polyglot",
+    "ide",
+    "vscode",
+    "jetbrains"
+  ],
+  "author": "Savaş Aldemir",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/savasaldemir/my-agent.git"
+  },
+  "homepage": "https://github.com/savasaldemir/my-agent"
+}
