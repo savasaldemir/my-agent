@@ -1,23 +1,23 @@
 """Authentication tests"""
 
-import pytest
-from fastapi.testclient import TestClient
-from ..app import create_app
-from ..schemas import UserCreate
+from uuid import uuid4
 
-@pytest.fixture
-def client():
-    """Test client"""
-    app = create_app()
-    return TestClient(app)
+
+def _unique_username() -> str:
+    return f"testuser_{uuid4().hex[:8]}"
+
+
+def _unique_email() -> str:
+    return f"test_{uuid4().hex[:8]}@example.com"
 
 def test_register(client):
     """Test user registration"""
+    username = _unique_username()
     response = client.post(
         "/api/v1/auth/register",
         json={
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": username,
+            "email": _unique_email(),
             "password": "securepassword123",
             "full_name": "Test User",
         },
@@ -27,16 +27,18 @@ def test_register(client):
     assert "access_token" in data
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
-    assert data["user"]["username"] == "testuser"
+    assert data["user"]["username"] == username
 
 def test_register_duplicate_username(client):
     """Test registration with duplicate username"""
+    username = _unique_username()
+
     # First registration
     client.post(
         "/api/v1/auth/register",
         json={
-            "username": "testuser",
-            "email": "test1@example.com",
+            "username": username,
+            "email": _unique_email(),
             "password": "securepassword123",
         },
     )
@@ -45,8 +47,8 @@ def test_register_duplicate_username(client):
     response = client.post(
         "/api/v1/auth/register",
         json={
-            "username": "testuser",
-            "email": "test2@example.com",
+            "username": username,
+            "email": _unique_email(),
             "password": "securepassword123",
         },
     )
@@ -54,12 +56,14 @@ def test_register_duplicate_username(client):
 
 def test_login(client):
     """Test user login"""
+    username = _unique_username()
+
     # Register first
     client.post(
         "/api/v1/auth/register",
         json={
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": username,
+            "email": _unique_email(),
             "password": "securepassword123",
         },
     )
@@ -68,7 +72,7 @@ def test_login(client):
     response = client.post(
         "/api/v1/auth/login",
         json={
-            "username": "testuser",
+            "username": username,
             "password": "securepassword123",
         },
     )
@@ -78,12 +82,14 @@ def test_login(client):
 
 def test_login_invalid_password(client):
     """Test login with invalid password"""
+    username = _unique_username()
+
     # Register first
     client.post(
         "/api/v1/auth/register",
         json={
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": username,
+            "email": _unique_email(),
             "password": "securepassword123",
         },
     )
@@ -92,7 +98,7 @@ def test_login_invalid_password(client):
     response = client.post(
         "/api/v1/auth/login",
         json={
-            "username": "testuser",
+            "username": username,
             "password": "wrongpassword",
         },
     )
@@ -100,12 +106,14 @@ def test_login_invalid_password(client):
 
 def test_get_me(client):
     """Test get current user"""
+    username = _unique_username()
+
     # Register first
     reg_response = client.post(
         "/api/v1/auth/register",
         json={
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": username,
+            "email": _unique_email(),
             "password": "securepassword123",
         },
     )
@@ -117,4 +125,4 @@ def test_get_me(client):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert response.json()["username"] == "testuser"
+    assert response.json()["username"] == username

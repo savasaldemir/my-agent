@@ -1,29 +1,57 @@
 """Database configuration and connection"""
 
 from typing import AsyncGenerator
+import logging
+import asyncio
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
     async_sessionmaker,
 )
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm import declarative_base
 from motor.motor_asyncio import AsyncIOMotorClient
 import redis.asyncio as redis
 
 from .config import settings
 
-# SQLAlchemy
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,
-    future=True,
-)
+logger = logging.getLogger(__name__)
 
-SessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+
+def _resolve_async_database_url(database_url: str) -> str:
+    """Normalize database URL to an async-capable driver."""
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return database_url
+
+
+DATABASE_URL = _resolve_async_database_url(settings.database_url)
+
+# SQLAlchemy
+try:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=settings.debug,
+        future=True,
+    )
+    SessionLocal = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+except InvalidRequestError:
+    fallback_url = "sqlite+aiosqlite:///./backend/core/my_agent.db"
+    logger.warning("Falling back to SQLite because configured DB URL is not async-compatible")
+    engine = create_async_engine(
+        fallback_url,
+        echo=settings.debug,
+        future=True,
+    )
+    SessionLocal = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
 
 Base = declarative_base()
 
@@ -33,15 +61,32 @@ mongo_db = None
 
 # Redis
 redis_client = None
+_schema_initialized = False
+_schema_lock = asyncio.Lock()
+
+
+async def ensure_schema_initialized() -> None:
+    """Create tables once per process before DB usage."""
+    global _schema_initialized
+
+    if _schema_initialized:
+        return
+
+    async with _schema_lock:
+        if _schema_initialized:
+            return
+
+        from . import models  # noqa: F401
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        _schema_initialized = True
 
 
 async def init_db():
     """Initialize database connections"""
     global mongo_client, mongo_db, redis_client
 
-    # PostgreSQL (Tables created via Alembic)
-    # await engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.create_all)
+    await ensure_schema_initialized()
 
     # MongoDB
     mongo_client = AsyncIOMotorClient(settings.mongo_url)
@@ -68,6 +113,8 @@ async def close_db():
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Get database session"""
+    await ensure_schema_initialized()
+
     async with SessionLocal() as session:
         try:
             yield session

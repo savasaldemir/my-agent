@@ -1,15 +1,23 @@
 """Authentication routes"""
 
 from fastapi import APIRouter, HTTPException, status, Depends
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..database import get_db
 from ..schemas import UserCreate, UserLogin, UserRead
 from ..schemas.auth import TokenResponse
 from ..services import AuthService
-from ..security import get_current_user
+from ..security.permission import get_current_user
 from ..models import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+class RefreshRequest(BaseModel):
+    """Refresh token payload"""
+
+    refresh_token: str
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(
@@ -73,7 +81,7 @@ async def login(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
-    refresh_token: str,
+    payload: RefreshRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """Refresh access token
@@ -87,11 +95,11 @@ async def refresh(
     """
     try:
         auth_service = AuthService(db)
-        access_token = await auth_service.refresh_access_token(refresh_token)
+        access_token = await auth_service.refresh_access_token(payload.refresh_token)
         
         return {
             "access_token": access_token,
-            "refresh_token": refresh_token,
+            "refresh_token": payload.refresh_token,
             "token_type": "bearer",
         }
     except ValueError as e:
@@ -112,7 +120,7 @@ async def get_me(
     Returns:
         User information
     """
-    return current_user
+    return current_user.to_dict()
 
 @router.post("/logout")
 async def logout(

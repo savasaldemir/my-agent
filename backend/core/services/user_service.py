@@ -1,15 +1,18 @@
 """User service"""
 
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..models import User
 from ..schemas import UserCreate, UserUpdate
-from ..security import get_password_hash, verify_password
+from ..security.password import get_password_hash, verify_password
+
 
 class UserService:
     """User business logic"""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
     
@@ -25,27 +28,22 @@ class UserService:
         Raises:
             ValueError: If username or email already exists
         """
-        # Check if user exists
         existing = await self.db.execute(
-            select(User).where(
-                (User.username == user_data.username) | 
-                (User.email == user_data.email)
-            )
+            select(User).where((User.username == user_data.username) | (User.email == user_data.email))
         )
         if existing.scalars().first():
             raise ValueError("Username or email already exists")
-        
-        # Create user
+
         user = User(
             username=user_data.username,
             email=user_data.email,
             password_hash=get_password_hash(user_data.password),
             full_name=user_data.full_name,
         )
-        
+
         self.db.add(user)
         await self.db.flush()
-        
+
         return user
     
     async def get_user_by_id(self, user_id: str) -> Optional[User]:
@@ -57,9 +55,7 @@ class UserService:
         Returns:
             User or None
         """
-        result = await self.db.execute(
-            select(User).where(User.id == user_id)
-        )
+        result = await self.db.execute(select(User).where(User.id == user_id))
         return result.scalars().first()
     
     async def get_user_by_username(self, username: str) -> Optional[User]:
@@ -71,9 +67,7 @@ class UserService:
         Returns:
             User or None
         """
-        result = await self.db.execute(
-            select(User).where(User.username == username)
-        )
+        result = await self.db.execute(select(User).where(User.username == username))
         return result.scalars().first()
     
     async def get_user_by_email(self, email: str) -> Optional[User]:
@@ -85,9 +79,7 @@ class UserService:
         Returns:
             User or None
         """
-        result = await self.db.execute(
-            select(User).where(User.email == email)
-        )
+        result = await self.db.execute(select(User).where(User.email == email))
         return result.scalars().first()
     
     async def authenticate_user(
@@ -140,7 +132,8 @@ class UserService:
         
         for field, value in update_data.items():
             setattr(user, field, value)
-        
+
+        user.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         
         return user

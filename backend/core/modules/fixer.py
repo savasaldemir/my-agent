@@ -21,8 +21,21 @@ class PythonFixer(CodeFixer):
 
     def fix(self) -> str:
         """Fix Python code"""
-        # TODO: Implement Python fixing
-        return self.code
+        lines = self.code.split("\n")
+        fixed_lines: List[str] = []
+
+        for line in lines:
+            normalized = line.rstrip()
+
+            if normalized.startswith("\t"):
+                normalized = normalized.replace("\t", "    ")
+
+            if normalized.startswith("print ") and "(" not in normalized:
+                normalized = normalized.replace("print ", "print(", 1) + ")"
+
+            fixed_lines.append(normalized)
+
+        return "\n".join(fixed_lines)
 
 
 class JavaScriptFixer(CodeFixer):
@@ -30,5 +43,23 @@ class JavaScriptFixer(CodeFixer):
 
     def fix(self) -> str:
         """Fix JavaScript code"""
-        # TODO: Implement JavaScript fixing
-        return self.code
+        lines = self.code.split("\n")
+        fixed_lines: List[str] = []
+
+        for line in lines:
+            normalized = line
+
+            if "var " in normalized:
+                normalized = normalized.replace("var ", "let ")
+
+            stripped = normalized.strip()
+            if stripped and not stripped.startswith("//") and stripped.endswith((")", "'", '"')):
+                if any(
+                    stripped.startswith(prefix)
+                    for prefix in ["let ", "const ", "return ", "throw "]
+                ):
+                    normalized = normalized + ";"
+
+            fixed_lines.append(normalized)
+
+        return "\n".join(fixed_lines)

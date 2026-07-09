@@ -1,6 +1,6 @@
 """JWT token utilities"""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Dict, Optional, Any
 import jwt
 from ..config import settings
@@ -20,15 +20,16 @@ def create_access_token(
     Returns:
         Encoded JWT token
     """
+    now = datetime.now(UTC)
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(hours=int(settings.jwt_expiration_hours))
+        expire = now + timedelta(hours=int(settings.jwt_expiration_hours))
     
     payload = {
         "sub": subject,
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": now,
         "type": "access",
     }
     
@@ -52,12 +53,13 @@ def create_refresh_token(subject: str) -> str:
     Returns:
         Encoded JWT refresh token
     """
-    expire = datetime.utcnow() + timedelta(days=7)
+    now = datetime.now(UTC)
+    expire = now + timedelta(days=7)
     
     payload = {
         "sub": subject,
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": now,
         "type": "refresh",
     }
     

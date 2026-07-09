@@ -24,15 +24,16 @@ authRoutes.post('/login', async (req: Request<{}, {}, LoginRequest>, res: Respon
       return res.status(400).json({ error: 'Username and password required' });
     }
 
-    // TODO: Implement authentication logic
-    res.json({
-      token: 'mock-jwt-token',
-      user: {
-        id: 'user_123',
-        username,
-      },
+    const response = await axios.post(`${config.coreServiceUrl}/api/v1/auth/login`, {
+      username,
+      password,
     });
+
+    return res.json(response.data);
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
@@ -46,16 +47,17 @@ authRoutes.post('/signup', async (req: Request<{}, {}, SignupRequest>, res: Resp
       return res.status(400).json({ error: 'Username, email, and password required' });
     }
 
-    // TODO: Implement signup logic
-    res.status(201).json({
-      message: 'User created successfully',
-      user: {
-        id: 'user_123',
-        username,
-        email,
-      },
+    const response = await axios.post(`${config.coreServiceUrl}/api/v1/auth/register`, {
+      username,
+      email,
+      password,
     });
+
+    return res.status(201).json(response.data);
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
     res.status(500).json({ error: 'Signup failed' });
   }
 });

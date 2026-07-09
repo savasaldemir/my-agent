@@ -80,7 +80,47 @@ class JavaScriptAnalyzer(CodeAnalyzer):
 
     def analyze(self) -> List[Issue]:
         """Analyze JavaScript code"""
-        # TODO: Implement JavaScript analysis
+        lines = self.code.split("\n")
+        for idx, line in enumerate(lines, start=1):
+            stripped = line.strip()
+
+            if stripped.startswith("var "):
+                self.issues.append(
+                    Issue(
+                        line=idx,
+                        column=1,
+                        severity=Severity.WARNING,
+                        message="Prefer let/const over var",
+                        rule="no-var",
+                    )
+                )
+
+            if "console.log(" in stripped:
+                self.issues.append(
+                    Issue(
+                        line=idx,
+                        column=max(stripped.find("console.log(") + 1, 1),
+                        severity=Severity.INFO,
+                        message="Remove debug logging before production",
+                        rule="no-console",
+                    )
+                )
+
+            if stripped and not stripped.endswith((";", "{", "}", ")")) and not stripped.startswith("//"):
+                if any(
+                    stripped.startswith(keyword)
+                    for keyword in ["const ", "let ", "var ", "return ", "throw ", "import ", "export "]
+                ):
+                    self.issues.append(
+                        Issue(
+                            line=idx,
+                            column=len(stripped),
+                            severity=Severity.INFO,
+                            message="Consider adding a semicolon for consistency",
+                            rule="semi",
+                        )
+                    )
+
         return self.issues
 
 

@@ -1,18 +1,19 @@
 """Permission and authorization utilities"""
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-from typing import Optional
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .jwt import verify_token
 from ..models import User
 from ..database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 
 security = HTTPBearer()
 
 async def get_current_user(
-    credentials: HTTPAuthCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     """Get current authenticated user
@@ -38,7 +39,6 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    from sqlalchemy import select
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalars().first()
     

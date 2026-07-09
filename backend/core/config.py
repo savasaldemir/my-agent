@@ -1,12 +1,17 @@
 """Configuration management"""
 
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
 class Settings(BaseSettings):
     """Application settings"""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+    )
 
     # Application
     app_name: str = "My Agent Core"
@@ -19,14 +24,14 @@ class Settings(BaseSettings):
     workers: int = 4
 
     # Database
-    database_url: str = Field(default="postgresql://user:password@localhost:5432/my_agent")
+    database_url: str = Field(default="sqlite+aiosqlite:///./backend/core/my_agent.db")
     mongo_url: str = Field(default="mongodb://localhost:27017/my_agent")
 
     # Redis
     redis_url: str = Field(default="redis://localhost:6379")
 
     # Security
-    jwt_secret: str = Field(default="your-secret-key-here")
+    jwt_secret: str = Field(default="my-agent-dev-secret-key-change-in-production-32chars")
     jwt_expiration_hours: int = 24
 
     # Logging
@@ -47,10 +52,5 @@ class Settings(BaseSettings):
         "php",
         "rust",
     ]
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-
 
 settings = Settings()

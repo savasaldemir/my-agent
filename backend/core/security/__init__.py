@@ -1,8 +1,7 @@
 """Security utilities"""
 
 from .password import get_password_hash, verify_password
-from .jwt import create_access_token, decode_token, create_refresh_token
-from .permission import require_auth
+from .jwt import create_access_token, decode_token, create_refresh_token, verify_token
 
 __all__ = [
     "get_password_hash",
@@ -10,5 +9,5 @@ __all__ = [
     "create_access_token",
     "decode_token",
     "create_refresh_token",
-    "require_auth",
+    "verify_token",
 ]

@@ -75,14 +75,55 @@
 git clone https://github.com/savasaldemir/my-agent.git
 cd my-agent
 
-# Tüm kurulumları yap
-./scripts/setup.sh
+# Altyapı servislerini tek komutla başlat (PostgreSQL + Redis + MongoDB)
+npm run dev
 
-# Development ortamını başlat
-docker-compose up -d
+# Backend bağımlılıkları
+cd backend/core
+python -m pip install -r requirements.txt
+cd ../..
 
-# Web dashboard'a erişimi
-open http://localhost:3000
+# Core API'yi başlat
+python -m uvicorn backend.core.app:app --host 0.0.0.0 --port 8000
+
+# Başka terminalde API Gateway
+cd backend/api-gateway
+npm install
+npm run dev
+
+# Başka terminalde Web UI
+cd frontend/web
+npm install
+npm run dev
+```
+
+Servis URL'leri:
+
+- Core API: `http://localhost:8000`
+- API Gateway: `http://localhost:3000`
+- Web UI: `http://localhost:5173`
+
+Altyapıyı durdurmak için:
+
+```bash
+npm run dev:stop
+```
+
+## 🗃️ Veritabanı Migration (Alembic)
+
+Core klasöründen çalıştır:
+
+```bash
+cd backend/core
+
+# Mevcut migration'ları uygula
+alembic upgrade head
+
+# Yeni migration oluştur (autogenerate)
+alembic revision --autogenerate -m "your_migration_message"
+
+# Son migration'ı geri al
+alembic downgrade -1
 ```
 
 ## 📚 Proje Yapısı

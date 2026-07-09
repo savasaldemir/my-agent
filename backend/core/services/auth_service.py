@@ -1,16 +1,18 @@
 """Authentication service"""
 
-from typing import Tuple, Optional
+from typing import Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..models import User
 from ..schemas import UserCreate, UserLogin
-from ..security import create_access_token, create_refresh_token, verify_token
+from ..security.jwt import create_access_token, create_refresh_token, verify_token
 from .user_service import UserService
 import jwt
 
+
 class AuthService:
     """Authentication business logic"""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
         self.user_service = UserService(db)
@@ -30,10 +32,10 @@ class AuthService:
         try:
             user = await self.user_service.create_user(user_data)
             await self.db.commit()
-            
+
             access_token = create_access_token(str(user.id))
             refresh_token = create_refresh_token(str(user.id))
-            
+
             return user, access_token, refresh_token
         except ValueError as e:
             await self.db.rollback()
