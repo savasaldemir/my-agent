@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
+import logging
 
 from .config import settings
 from .database import init_db, close_db
@@ -13,17 +14,22 @@ from .logging_config import setup_logging
 from .routers import analysis, projects, health, auth
 
 setup_logging(settings.log_level)
+logger = logging.getLogger(__name__)
+
+
+def _parse_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     await init_db()
-    print("✅ Application started")
+    logger.info("Application started")
     yield
     # Shutdown
     await close_db()
-    print("👋 Application stopped")
+    logger.info("Application stopped")
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
@@ -36,19 +42,24 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    cors_origins = _parse_csv(settings.cors_origins)
+    allow_credentials = "*" not in cors_origins
+
     # CORS Middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=cors_origins or ["http://localhost:5173"],
+        allow_credentials=allow_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
+    allowed_hosts = _parse_csv(settings.allowed_hosts)
+
     # Trusted Host Middleware
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["localhost", "127.0.0.1", "testserver", "*.myagent.dev"],
+        allowed_hosts=allowed_hosts or ["localhost", "127.0.0.1", "testserver"],
     )
 
     # Include routers

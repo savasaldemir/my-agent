@@ -13,7 +13,7 @@ from sqlalchemy.orm import declarative_base
 from motor.motor_asyncio import AsyncIOMotorClient
 import redis.asyncio as redis
 
-from .config import settings
+from .config import settings, DEFAULT_SQLITE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ try:
         expire_on_commit=False,
     )
 except InvalidRequestError:
-    fallback_url = "sqlite+aiosqlite:///./backend/core/my_agent.db"
+    fallback_url = f"sqlite+aiosqlite:///{DEFAULT_SQLITE_PATH}"
     logger.warning("Falling back to SQLite because configured DB URL is not async-compatible")
     engine = create_async_engine(
         fallback_url,

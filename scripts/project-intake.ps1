@@ -1,6 +1,7 @@
 param(
     [string]$ProjectPath = ".",
-    [string]$OutputDir = ".agent-intake"
+    [string]$OutputDir = ".agent-intake",
+    [string[]]$ExtraExcludeDirs = @("fabrika_Agent")
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,8 +20,12 @@ Write-Host "Scanning project: $projectRoot"
 Write-Host "Output directory: $outputPath"
 
 $excludeDirs = @(
-    ".git", "node_modules", ".venv", "venv", "dist", "build", "out", "coverage", ".next", ".turbo", "target", "bin", "obj"
+    ".git", "node_modules", ".venv", "venv", "dist", "build", "out", "coverage", ".next", ".turbo", "target", "bin", "obj", ".agent-intake", "__pycache__"
 )
+
+if ($ExtraExcludeDirs -and $ExtraExcludeDirs.Count -gt 0) {
+    $excludeDirs += $ExtraExcludeDirs
+}
 
 $extensionToLanguage = @{
     ".py" = "python"
@@ -107,7 +112,11 @@ foreach ($file in $allFiles) {
 }
 
 $detectedDatabases = @()
-$textFiles = $allFiles | Where-Object { $_.Length -lt 2MB }
+$textFiles = $allFiles | Where-Object {
+    $_.Length -lt 2MB -and $_.Extension.ToLowerInvariant() -notin @(
+        ".pyc", ".pyo", ".exe", ".dll", ".so", ".dylib", ".msix", ".zip", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".ico", ".pdf"
+    )
+}
 
 # Limit DB signal scan to dependency/config files to reduce false positives from docs.
 $dbSignalFiles = $allFiles | Where-Object {
@@ -145,6 +154,10 @@ $securityFindings = @()
 foreach ($pattern in $securityPatterns) {
     $matches = Select-String -Path ($textFiles.FullName) -Pattern $pattern.regex -SimpleMatch:$false -CaseSensitive:$false -ErrorAction SilentlyContinue
     foreach ($m in $matches) {
+        if ($pattern.id -eq "hardcoded-secret" -and $m.Line -match "<your_|<token>|<secret>") {
+            continue
+        }
+
         $securityFindings += [pscustomobject]@{
             id = $pattern.id
             severity = $pattern.severity

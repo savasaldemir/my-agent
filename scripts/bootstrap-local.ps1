@@ -1,6 +1,8 @@
 param(
     [switch]$AutoInstallRuntimes,
-    [switch]$StartInfra
+    [switch]$StartInfra,
+    [switch]$BackendOnly,
+    [switch]$ForcePythonDeps
 )
 
 $ErrorActionPreference = "Stop"
@@ -88,33 +90,50 @@ function Ensure-Command {
 }
 
 $pythonExe = Ensure-Command -Name "python" -WingetId "Python.Python.3.12"
-$nodeExe = Ensure-Command -Name "node" -WingetId "OpenJS.NodeJS.LTS"
-$npmExe = Ensure-Command -Name "npm" -WingetId "OpenJS.NodeJS.LTS"
-$dockerExe = Ensure-Command -Name "docker" -WingetId "Docker.DockerDesktop"
+$npmExe = $null
+$dockerExe = $null
+
+if (-not $BackendOnly) {
+    $null = Ensure-Command -Name "node" -WingetId "OpenJS.NodeJS.LTS"
+    $npmExe = Ensure-Command -Name "npm" -WingetId "OpenJS.NodeJS.LTS"
+    $dockerExe = Ensure-Command -Name "docker" -WingetId "Docker.DockerDesktop"
+}
 
 $venvPython = Join-Path $RepoRoot "backend\venv\Scripts\python.exe"
+$createdVenv = $false
 if (-not (Test-Path $venvPython)) {
     Write-Host "Creating backend venv..."
     Invoke-ExternalChecked -FilePath $pythonExe -Arguments @("-m", "venv", (Join-Path $RepoRoot "backend/venv"))
+    $createdVenv = $true
 }
 
-Write-Host "Installing backend Python dependencies..."
-$requirementsFile = Join-Path $RepoRoot "backend/core/requirements.local.txt"
-if (-not (Test-Path $requirementsFile)) {
-    $requirementsFile = Join-Path $RepoRoot "backend/core/requirements.txt"
+if ($createdVenv -or $ForcePythonDeps) {
+    Write-Host "Installing backend Python dependencies..."
+    $requirementsFile = Join-Path $RepoRoot "backend/core/requirements.local.txt"
+    if (-not (Test-Path $requirementsFile)) {
+        $requirementsFile = Join-Path $RepoRoot "backend/core/requirements.txt"
+    }
+    Invoke-ExternalChecked -FilePath $venvPython -Arguments @("-m", "pip", "install", "-r", $requirementsFile)
 }
-Invoke-ExternalChecked -FilePath $venvPython -Arguments @("-m", "pip", "install", "-r", $requirementsFile)
+else {
+    Write-Host "Backend venv already exists. Skipping Python dependency install (use -ForcePythonDeps to reinstall)."
+}
 
-Write-Host "Installing Node dependencies for API gateway and frontend..."
-Push-Location (Join-Path $RepoRoot "backend/api-gateway")
-Invoke-ExternalChecked -FilePath $npmExe -Arguments @("install")
-Pop-Location
+if (-not $BackendOnly) {
+    Write-Host "Installing Node dependencies for API gateway and frontend..."
+    Push-Location (Join-Path $RepoRoot "backend/api-gateway")
+    Invoke-ExternalChecked -FilePath $npmExe -Arguments @("install")
+    Pop-Location
 
-Push-Location (Join-Path $RepoRoot "frontend/web")
-Invoke-ExternalChecked -FilePath $npmExe -Arguments @("install")
-Pop-Location
+    Push-Location (Join-Path $RepoRoot "frontend/web")
+    Invoke-ExternalChecked -FilePath $npmExe -Arguments @("install")
+    Pop-Location
+}
 
 if ($StartInfra) {
+    if (-not $dockerExe) {
+        $dockerExe = Ensure-Command -Name "docker" -WingetId "Docker.DockerDesktop"
+    }
     Write-Host "Starting infrastructure with Docker Compose..."
     Invoke-ExternalChecked -FilePath $dockerExe -Arguments @("compose", "-f", (Join-Path $RepoRoot "deployment/docker-compose.yml"), "up", "-d")
 }

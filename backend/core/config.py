@@ -3,6 +3,11 @@
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_SQLITE_PATH = (PROJECT_ROOT / "backend" / "core" / "my_agent.db").as_posix()
 
 
 class Settings(BaseSettings):
@@ -24,7 +29,7 @@ class Settings(BaseSettings):
     workers: int = 4
 
     # Database
-    database_url: str = Field(default="sqlite+aiosqlite:///./backend/core/my_agent.db")
+    database_url: str = Field(default=f"sqlite+aiosqlite:///{DEFAULT_SQLITE_PATH}")
     mongo_url: str = Field(default="mongodb://localhost:27017/my_agent")
 
     # Redis
@@ -37,6 +42,10 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     log_file: Optional[str] = None
+
+    # API security
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    allowed_hosts: str = "localhost,127.0.0.1,testserver"
 
     # Analysis
     max_file_size_mb: int = 100

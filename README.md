@@ -117,6 +117,19 @@ Makinede eksik runtime'lari kontrol edip (gerekirse kurup) backend + gateway + f
 powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes
 ```
 
+Sadece backend odakli (UI kurulumuna dokunmadan) hazirlik icin:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes -BackendOnly
+```
+
+Mevcut backend venv kullaniliyorsa script `pip install` adimini atlar.
+Zorla yeniden kurulum icin:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes -BackendOnly -ForcePythonDeps
+```
+
 Altyapiyi da otomatik kaldirmak icin:
 
 ```bash
@@ -186,6 +199,13 @@ Bu komut hedef projede `.agent-intake/` klasoru olusturur ve su dosyalari uretir
 - `project-profile.json` (dil dagilimi, birincil dil, veritabani sinyalleri)
 - `security-findings.json` (hizli guvenlik bulgulari)
 - `intake-report.md` (oncelikli iyilestirme ozeti)
+
+Not: Varsayilan olarak `fabrika_Agent` klasoru intake taramasindan dislanir.
+Isterseniz ek dislama klasorleri verebilirsiniz:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/project-intake.ps1 -ProjectPath "." -ExtraExcludeDirs "fabrika_Agent","frontend"
+```
 
 Bu raporla birlikte agent'e su tip komutlar verebilirsiniz:
 
