@@ -108,8 +108,33 @@ foreach ($file in $allFiles) {
 
 $detectedDatabases = @()
 $textFiles = $allFiles | Where-Object { $_.Length -lt 2MB }
+
+# Limit DB signal scan to dependency/config files to reduce false positives from docs.
+$dbSignalFiles = $allFiles | Where-Object {
+    $_.Name -in @(
+        "requirements.txt",
+        "pyproject.toml",
+        "Pipfile",
+        "package.json",
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+        "pom.xml",
+        "build.gradle",
+        "build.gradle.kts",
+        "go.mod",
+        "Cargo.toml",
+        "composer.json",
+        "Gemfile",
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        ".env",
+        ".env.example"
+    )
+}
+
 foreach ($pattern in $dbPatterns) {
-    $found = Select-String -Path ($textFiles.FullName) -Pattern $pattern.regex -SimpleMatch:$false -CaseSensitive:$false -ErrorAction SilentlyContinue
+    $found = Select-String -Path ($dbSignalFiles.FullName) -Pattern $pattern.regex -SimpleMatch:$false -CaseSensitive:$false -ErrorAction SilentlyContinue
     if ($found) {
         $detectedDatabases += $pattern.name
     }

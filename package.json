@@ -24,6 +24,9 @@
   ],
   "scripts": {
     "setup": "npm run install-all && npm run init-db",
+    "preflight": "powershell -ExecutionPolicy Bypass -File scripts/preflight.ps1",
+    "bootstrap": "powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes",
+    "bootstrap:infra": "powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes -StartInfra",
     "project:intake": "powershell -ExecutionPolicy Bypass -File scripts/project-intake.ps1",
     "project:intake:self": "powershell -ExecutionPolicy Bypass -File scripts/project-intake.ps1 -ProjectPath .",
     "install-all": "npm install && npm run install:backend && npm run install:frontend && npm run install:sdk",

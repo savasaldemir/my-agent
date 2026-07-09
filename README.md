@@ -109,6 +109,26 @@ Altyapıyı durdurmak için:
 npm run dev:stop
 ```
 
+## ✅ Tek Komut Ortam Hazirlama (Windows)
+
+Makinede eksik runtime'lari kontrol edip (gerekirse kurup) backend + gateway + frontend bagimliliklarini hazirlamak icin:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes
+```
+
+Altyapiyi da otomatik kaldirmak icin:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes -StartInfra
+```
+
+Sadece on kontrol (preflight) icin:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/preflight.ps1
+```
+
 ## 🗃️ Veritabanı Migration (Alembic)
 
 Core klasöründen çalıştır:
