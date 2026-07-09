@@ -25,8 +25,8 @@ analysisRoutes.post('/analyze', async (req: Request<{}, {}, AnalysisRequest>, re
       features: features || ['quality', 'security', 'performance'],
     });
 
-    res.json(response.data);
+    return res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Analysis failed' });
+    return res.status(500).json({ error: 'Analysis failed' });
   }
 });

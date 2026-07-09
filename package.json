@@ -23,6 +23,8 @@
     "cli"
   ],
   "scripts": {
+    "start:agent": "python launch_agent.py",
+    "start:fabrika": "python fabrika_Agent/launch_fabrika.py",
     "setup": "npm run install-all && npm run init-db",
     "preflight": "powershell -ExecutionPolicy Bypass -File scripts/preflight.ps1",
     "bootstrap": "powershell -ExecutionPolicy Bypass -File scripts/bootstrap-local.ps1 -AutoInstallRuntimes",

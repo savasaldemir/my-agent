@@ -3,8 +3,9 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import 'express-async-errors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { config } from './config/environment';
 import { errorHandler } from './middleware/errorHandler';
@@ -17,6 +18,9 @@ import { healthRoutes } from './routes/health';
 const app: Express = express();
 const logger = getLogger();
 const allowCredentials = !config.corsOrigins.includes('*');
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
+const frontendDistDir = path.resolve(currentDir, '../../../../frontend/web/dist');
 
 // Security Middleware
 app.use(helmet());
@@ -30,7 +34,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Logging
-app.use(morgan('combined'));
 app.use(requestLogger);
 
 // Routes
@@ -39,11 +42,22 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/analysis', analysisRoutes);
 
+// Static frontend for the packaged AGENT application
+app.use(express.static(frontendDistDir));
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
+    return next();
+  }
+
+  return res.sendFile(path.join(frontendDistDir, 'index.html'));
+});
+
 // Error Handling
 app.use(errorHandler);
 
 // 404 Handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 

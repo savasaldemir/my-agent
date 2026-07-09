@@ -1,4 +1,3 @@
-import { Request, Response, NextFunction } from 'express';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 

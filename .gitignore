@@ -102,3 +102,8 @@ yarn-error.log*
 *.temp
 .tmp/
 .agent-intake/
+fabrika_Agent/workspaces/
+fabrika_Agent/task_queue.json
+frontend/web/*.tsbuildinfo
+frontend/web/vite.config.js
+frontend/web/vite.config.d.ts

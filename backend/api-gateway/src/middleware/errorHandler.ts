@@ -15,10 +15,10 @@ export class AppError extends Error {
 
 export const errorHandler = (
   error: Error | AppError,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
-) => {
+  _next: NextFunction
+): Response => {
   logger.error(error);
 
   if (error instanceof AppError) {
@@ -28,7 +28,7 @@ export const errorHandler = (
     });
   }
 
-  res.status(500).json({
+  return res.status(500).json({
     error: 'Internal Server Error',
     statusCode: 500,
   });

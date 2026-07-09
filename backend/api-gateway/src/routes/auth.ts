@@ -34,7 +34,7 @@ authRoutes.post('/login', async (req: Request<{}, {}, LoginRequest>, res: Respon
     if (axios.isAxiosError(error) && error.response) {
       return res.status(error.response.status).json(error.response.data);
     }
-    res.status(500).json({ error: 'Authentication failed' });
+    return res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
@@ -58,11 +58,11 @@ authRoutes.post('/signup', async (req: Request<{}, {}, SignupRequest>, res: Resp
     if (axios.isAxiosError(error) && error.response) {
       return res.status(error.response.status).json(error.response.data);
     }
-    res.status(500).json({ error: 'Signup failed' });
+    return res.status(500).json({ error: 'Signup failed' });
   }
 });
 
 // Logout
-authRoutes.post('/logout', (req: Request, res: Response) => {
-  res.json({ message: 'Logged out successfully' });
+authRoutes.post('/logout', (_req: Request, res: Response) => {
+  return res.json({ message: 'Logged out successfully' });
 });

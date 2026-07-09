@@ -12,12 +12,12 @@ interface CreateProjectRequest {
 }
 
 // Get all projects
-projectRoutes.get('/', async (req: Request, res: Response) => {
+projectRoutes.get('/', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${config.coreServiceUrl}/api/v1/projects`);
-    res.json(response.data);
+    return res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch projects' });
+    return res.status(500).json({ error: 'Failed to fetch projects' });
   }
 });
 
@@ -37,9 +37,9 @@ projectRoutes.post('/', async (req: Request<{}, {}, CreateProjectRequest>, res: 
       repository_url,
     });
 
-    res.status(201).json(response.data);
+    return res.status(201).json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create project' });
+    return res.status(500).json({ error: 'Failed to create project' });
   }
 });
 
@@ -48,9 +48,9 @@ projectRoutes.get('/:projectId', async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     const response = await axios.get(`${config.coreServiceUrl}/api/v1/projects/${projectId}`);
-    res.json(response.data);
+    return res.json(response.data);
   } catch (error) {
-    res.status(404).json({ error: 'Project not found' });
+    return res.status(404).json({ error: 'Project not found' });
   }
 });
 
@@ -59,8 +59,8 @@ projectRoutes.delete('/:projectId', async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     await axios.delete(`${config.coreServiceUrl}/api/v1/projects/${projectId}`);
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete project' });
+    return res.status(500).json({ error: 'Failed to delete project' });
   }
 });

@@ -186,6 +186,40 @@ my-agent/
 
 ## 🔧 Kullanım
 
+### Uygulama Giris Noktalari
+
+Bu depoda iki ayri uygulama vardir:
+
+1. `AGENT`: Modern web arayuzlu ana uygulama
+2. `fabrika_Agent`: Masaustu kontrol merkezi + legacy yerel fabrika arayuzu
+
+AGENT uygulamasini tek komutla calistirmak icin:
+
+```bash
+python launch_agent.py
+```
+
+Bu komut:
+
+- backend/core API'yi baslatir
+- backend/api-gateway uygulamasini baslatir
+- frontend/web build artefaktlarini gateway uzerinden servis eder
+- tarayicida `http://127.0.0.1:3000` adresini acar
+
+Fabrika kontrol merkezini baslatmak icin:
+
+```bash
+python fabrika_Agent/launch_fabrika.py
+```
+
+Bu arayuz ile:
+
+- AGENT stack'i baslatabilirsiniz
+- AGENT web UI'yi acabilirsiniz
+- legacy `yerel_fabrika_gui.py` uygulamasini ayri olarak acabilirsiniz
+- baska proje klasorlerini workspace'e alip intake calistirabilirsiniz
+- internet gerektiren isleri kuyruklayip daha sonra devam ettirebilirsiniz
+
 ### Var Olan Projeyi Iceri Alma (Intake)
 
 Farkli dil ve veritabani kullanan mevcut bir projeyi tek komutla tarayip profil cikarabilirsiniz:
