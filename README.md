@@ -150,6 +150,26 @@ my-agent/
 
 ## 🔧 Kullanım
 
+### Var Olan Projeyi Iceri Alma (Intake)
+
+Farkli dil ve veritabani kullanan mevcut bir projeyi tek komutla tarayip profil cikarabilirsiniz:
+
+```bash
+npm run project:intake -- -ProjectPath "C:\\path\\to\\your-project"
+```
+
+Bu komut hedef projede `.agent-intake/` klasoru olusturur ve su dosyalari uretir:
+
+- `project-profile.json` (dil dagilimi, birincil dil, veritabani sinyalleri)
+- `security-findings.json` (hizli guvenlik bulgulari)
+- `intake-report.md` (oncelikli iyilestirme ozeti)
+
+Bu raporla birlikte agent'e su tip komutlar verebilirsiniz:
+
+- "bu projeyi intake raporuna gore guvenlik acisindan harden et"
+- "high severity bulgulari kapat ve testleri yesile cek"
+- "mimariyi bozmadan kodu daha okunur ve production-ready yap"
+
 ### CLI ile Kullanım
 
 ```bash

@@ -24,6 +24,8 @@
   ],
   "scripts": {
     "setup": "npm run install-all && npm run init-db",
+    "project:intake": "powershell -ExecutionPolicy Bypass -File scripts/project-intake.ps1",
+    "project:intake:self": "powershell -ExecutionPolicy Bypass -File scripts/project-intake.ps1 -ProjectPath .",
     "install-all": "npm install && npm run install:backend && npm run install:frontend && npm run install:sdk",
     "install:backend": "cd backend/core && pip install -r requirements.txt && cd ../api-gateway && npm install",
     "install:frontend": "cd frontend/web && npm install && cd ../desktop && npm install && cd ../mobile && npm install",
