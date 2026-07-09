@@ -33,6 +33,12 @@ git push origin v1.0.0-alpha.1
 - Check "Set as a pre-release" (alpha).
 - Publish release.
 
+Optional (token-based API publish):
+```powershell
+$env:GITHUB_TOKEN = "<your_token>"
+.\scripts\publish-github-release.ps1
+```
+
 ## 5) Post-release verification
 - Confirm tag exists on remote:
 ```powershell
