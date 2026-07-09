@@ -4,6 +4,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+
+Push-Location $RepoRoot
+try {
 
 function Invoke-ExternalChecked {
     param(
@@ -88,27 +92,35 @@ $nodeExe = Ensure-Command -Name "node" -WingetId "OpenJS.NodeJS.LTS"
 $npmExe = Ensure-Command -Name "npm" -WingetId "OpenJS.NodeJS.LTS"
 $dockerExe = Ensure-Command -Name "docker" -WingetId "Docker.DockerDesktop"
 
-$venvPython = ".\backend\venv\Scripts\python.exe"
+$venvPython = Join-Path $RepoRoot "backend\venv\Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
     Write-Host "Creating backend venv..."
-    Invoke-ExternalChecked -FilePath $pythonExe -Arguments @("-m", "venv", "backend/venv")
+    Invoke-ExternalChecked -FilePath $pythonExe -Arguments @("-m", "venv", (Join-Path $RepoRoot "backend/venv"))
 }
 
 Write-Host "Installing backend Python dependencies..."
-Invoke-ExternalChecked -FilePath $venvPython -Arguments @("-m", "pip", "install", "-r", "backend/core/requirements.txt")
+$requirementsFile = Join-Path $RepoRoot "backend/core/requirements.local.txt"
+if (-not (Test-Path $requirementsFile)) {
+    $requirementsFile = Join-Path $RepoRoot "backend/core/requirements.txt"
+}
+Invoke-ExternalChecked -FilePath $venvPython -Arguments @("-m", "pip", "install", "-r", $requirementsFile)
 
 Write-Host "Installing Node dependencies for API gateway and frontend..."
-Push-Location backend/api-gateway
+Push-Location (Join-Path $RepoRoot "backend/api-gateway")
 Invoke-ExternalChecked -FilePath $npmExe -Arguments @("install")
 Pop-Location
 
-Push-Location frontend/web
+Push-Location (Join-Path $RepoRoot "frontend/web")
 Invoke-ExternalChecked -FilePath $npmExe -Arguments @("install")
 Pop-Location
 
 if ($StartInfra) {
     Write-Host "Starting infrastructure with Docker Compose..."
-    Invoke-ExternalChecked -FilePath $dockerExe -Arguments @("compose", "-f", "deployment/docker-compose.yml", "up", "-d")
+    Invoke-ExternalChecked -FilePath $dockerExe -Arguments @("compose", "-f", (Join-Path $RepoRoot "deployment/docker-compose.yml"), "up", "-d")
 }
 
 Write-Host "Bootstrap completed successfully."
+}
+finally {
+    Pop-Location
+}

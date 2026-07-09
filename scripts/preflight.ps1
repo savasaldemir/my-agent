@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
 
 function Test-CommandAvailable {
     param([string]$Name)
@@ -53,7 +54,8 @@ function Resolve-Executable {
     return $null
 }
 
-$pythonPath = if (Test-Path ".\backend\venv\Scripts\python.exe") { ".\backend\venv\Scripts\python.exe" } else { $null }
+$venvPythonPath = Join-Path $RepoRoot "backend\venv\Scripts\python.exe"
+$pythonPath = if (Test-Path $venvPythonPath) { $venvPythonPath } else { $null }
 $pythonAvailable = Test-CommandAvailable "python"
 $nodeAvailable = Test-CommandAvailable "node"
 $npmAvailable = Test-CommandAvailable "npm"

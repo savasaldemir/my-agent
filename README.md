@@ -129,6 +129,9 @@ Sadece on kontrol (preflight) icin:
 powershell -ExecutionPolicy Bypass -File scripts/preflight.ps1
 ```
 
+Not: Bootstrap scripti, hizli ve uyumlu kurulum icin oncelikle `backend/core/requirements.local.txt`
+dosyasini kullanir. Bu dosya yoksa `backend/core/requirements.txt` ile devam eder.
+
 ## 🗃️ Veritabanı Migration (Alembic)
 
 Core klasöründen çalıştır:
