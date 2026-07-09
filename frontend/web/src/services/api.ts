@@ -26,6 +26,20 @@ export interface Project {
   updated_at: string;
 }
 
+export interface WorkspaceTask {
+  id: string;
+  source_path: string;
+  workspace_path: string;
+  prompt: string;
+  requires_internet: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  retry_count: number;
+  last_error?: string | null;
+  report_path?: string | null;
+}
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -59,6 +73,18 @@ export const projectService = {
 export const analysisService = {
   analyze: (code: string, language: string, features?: string[]) =>
     api.post('/analysis/analyze', { code, language, features }),
+};
+
+export const workspaceService = {
+  listTasks: () => api.get<WorkspaceTask[]>('/workspaces/tasks'),
+  intake: (sourcePath: string, prompt: string, requiresInternet: boolean) =>
+    api.post<WorkspaceTask>('/workspaces/intake', {
+      source_path: sourcePath,
+      prompt,
+      requires_internet: requiresInternet,
+    }),
+  processQueue: () => api.post<{ processed: WorkspaceTask[] }>('/workspaces/tasks/process'),
+  getTask: (taskId: string) => api.get<WorkspaceTask>(`/workspaces/tasks/${taskId}`),
 };
 
 export default api;

@@ -11,7 +11,7 @@ from .database import init_db, close_db
 from .logging_config import setup_logging
 
 # Import routers
-from .routers import analysis, projects, health, auth
+from .routers import analysis, projects, health, auth, workspaces
 
 setup_logging(settings.log_level)
 logger = logging.getLogger(__name__)
@@ -67,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(analysis.router, prefix="/api/v1")
     app.include_router(projects.router, prefix="/api/v1")
+    app.include_router(workspaces.router, prefix="/api/v1")
 
     return app
 
