@@ -7,7 +7,7 @@ import pytest
 from starlette.testclient import TestClient
 
 
-TEST_DB_PATH = Path("backend/core/test_my_agent.db")
+TEST_DB_PATH = Path(__file__).resolve().parents[1] / "test_my_agent.db"
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_PATH.as_posix()}"
 os.environ["JWT_SECRET"] = "test-secret-key-with-safe-length-123456"
 

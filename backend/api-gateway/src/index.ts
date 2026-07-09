@@ -1,4 +1,4 @@
-"""API Gateway Entry Point"""
+// API Gateway entry point
 
 import express, { Express } from 'express';
 import cors from 'cors';
@@ -8,19 +8,21 @@ import 'express-async-errors';
 
 import { config } from './config/environment';
 import { errorHandler } from './middleware/errorHandler';
-import { requestLogger } from './middleware/logger';
+import { getLogger, requestLogger } from './middleware/logger';
 import { authRoutes } from './routes/auth';
 import { projectRoutes } from './routes/projects';
 import { analysisRoutes } from './routes/analysis';
 import { healthRoutes } from './routes/health';
 
 const app: Express = express();
+const logger = getLogger();
+const allowCredentials = !config.corsOrigins.includes('*');
 
 // Security Middleware
 app.use(helmet());
 app.use(cors({
-  origin: '*',
-  credentials: true,
+  origin: config.corsOrigins,
+  credentials: allowCredentials,
 }));
 
 // Body Parser
@@ -48,7 +50,7 @@ app.use((req, res) => {
 const PORT = config.port;
 
 app.listen(PORT, config.host, () => {
-  console.log(`✅ API Gateway running on http://${config.host}:${PORT}`);
+  logger.info({ host: config.host, port: PORT }, 'API Gateway running');
 });
 
 export default app;

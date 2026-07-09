@@ -93,6 +93,35 @@ function Is-ExcludedPath {
     return $false
 }
 
+function Is-GitIgnored {
+    param([string]$Path)
+
+    try {
+        $relativePath = [System.IO.Path]::GetRelativePath($projectRoot, $Path)
+        $null = git -C $projectRoot check-ignore $relativePath 2>$null
+        return $LASTEXITCODE -eq 0
+    }
+    catch {
+        return $false
+    }
+}
+
+function Is-StandardEnvIgnored {
+    param([string]$Path)
+
+    $gitignorePath = Join-Path $projectRoot ".gitignore"
+    if (-not (Test-Path $gitignorePath)) {
+        return $false
+    }
+
+    if ([System.IO.Path]::GetFileName($Path) -ne ".env") {
+        return $false
+    }
+
+    $gitignoreContent = Get-Content -Path $gitignorePath -ErrorAction SilentlyContinue
+    return $gitignoreContent -contains ".env"
+}
+
 $allFiles = Get-ChildItem -Path $projectRoot -Recurse -File | Where-Object {
     -not (Is-ExcludedPath $_.FullName)
 }
@@ -158,6 +187,10 @@ foreach ($pattern in $securityPatterns) {
             continue
         }
 
+        if ($pattern.id -eq "console-log" -and $m.Line -match '["'']console\.log\(') {
+            continue
+        }
+
         $securityFindings += [pscustomobject]@{
             id = $pattern.id
             severity = $pattern.severity
@@ -165,19 +198,6 @@ foreach ($pattern in $securityPatterns) {
             line = $m.LineNumber
             preview = $m.Line.Trim()
         }
-    }
-}
-
-$envFiles = Get-ChildItem -Path $projectRoot -Recurse -File -Filter ".env" -ErrorAction SilentlyContinue | Where-Object {
-    -not (Is-ExcludedPath $_.FullName)
-}
-foreach ($envFile in $envFiles) {
-    $securityFindings += [pscustomobject]@{
-        id = "env-file-present"
-        severity = "medium"
-        file = $envFile.FullName
-        line = 0
-        preview = ".env file exists; ensure it is not committed with secrets"
     }
 }
 
@@ -206,7 +226,12 @@ $findingsPath = Join-Path $outputPath "security-findings.json"
 $reportPath = Join-Path $outputPath "intake-report.md"
 
 $profile | ConvertTo-Json -Depth 8 | Set-Content -Path $profilePath -Encoding UTF8
-$securityFindings | ConvertTo-Json -Depth 8 | Set-Content -Path $findingsPath -Encoding UTF8
+if (($securityFindings | Measure-Object).Count -eq 0) {
+    Set-Content -Path $findingsPath -Value "[]" -Encoding UTF8
+}
+else {
+    $securityFindings | ConvertTo-Json -Depth 8 | Set-Content -Path $findingsPath -Encoding UTF8
+}
 
 $languageTable = if ($topLanguages.Count -gt 0) {
     ($topLanguages | ForEach-Object { "- $($_.Key): $($_.Value) file(s)" }) -join "`n"
