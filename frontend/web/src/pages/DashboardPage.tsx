@@ -1,7 +1,7 @@
 import React from 'react';
 import { useProjectStore } from '../store/projectStore';
-import { FolderUp, Globe, Play, Plus, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
-import { projectService, workspaceService } from '../services/api';
+import { FileCode2, FolderUp, Globe, Play, Plus, RefreshCw, ShieldCheck, Trash2, Wrench } from 'lucide-react';
+import { projectService, workspaceService, type WorkspaceArtifacts, type WorkspaceTask } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +23,9 @@ export const DashboardPage: React.FC = () => {
   const [isQueueRunning, setIsQueueRunning] = React.useState(false);
   const [error, setError] = React.useState('');
   const [successMessage, setSuccessMessage] = React.useState('');
+  const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(null);
+  const [selectedArtifacts, setSelectedArtifacts] = React.useState<WorkspaceArtifacts | null>(null);
+  const [isLoadingArtifacts, setIsLoadingArtifacts] = React.useState(false);
   const [newProject, setNewProject] = React.useState({
     name: '',
     language: 'python',
@@ -124,6 +127,36 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
+  const handleRunTask = async (taskId: string) => {
+    setError('');
+    setSuccessMessage('');
+    try {
+      const response = await workspaceService.runTask(taskId);
+      upsertWorkspaceTask(response.data);
+      setSuccessMessage('Task executed successfully');
+      await handleLoadArtifacts(taskId, response.data);
+    } catch {
+      setError('Task could not be executed');
+    }
+  };
+
+  const handleLoadArtifacts = async (taskId: string, task?: WorkspaceTask) => {
+    setSelectedTaskId(taskId);
+    setIsLoadingArtifacts(true);
+    try {
+      const [artifactsResponse, taskResponse] = await Promise.all([
+        workspaceService.getArtifacts(taskId),
+        task ? Promise.resolve({ data: task }) : workspaceService.getTask(taskId),
+      ]);
+      setSelectedArtifacts(artifactsResponse.data);
+      upsertWorkspaceTask(taskResponse.data);
+    } catch {
+      setError('Task details could not be loaded');
+    } finally {
+      setIsLoadingArtifacts(false);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate('/login');
@@ -215,15 +248,57 @@ export const DashboardPage: React.FC = () => {
                         <p className="text-sm text-slate-500">Workspace: {task.workspace_path}</p>
                       </div>
                       <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                        {task.status}
+                        {task.status} / {task.phase}
                       </span>
                     </div>
-                    <p className="mt-3 text-sm text-slate-600">Retries: {task.retry_count}{task.last_error ? ` • ${task.last_error}` : ''}</p>
+                    <p className="mt-3 text-sm text-slate-600">
+                      Retries: {task.retry_count}
+                      {task.next_retry_at ? ` • Next retry: ${task.next_retry_at}` : ''}
+                      {task.last_error ? ` • ${task.last_error}` : ''}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void handleRunTask(task.id)}
+                        className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                      >
+                        Run Pipeline
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleLoadArtifacts(task.id, task)}
+                        className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
+                      >
+                        View Result
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mb-8 rounded-2xl bg-white p-6 shadow-lg">
+          <div className="mb-4 flex items-center gap-3">
+            <Wrench className="h-5 w-5 text-slate-700" />
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Rebuild Pipeline Result</h2>
+              <p className="text-sm text-slate-500">Selected task: {selectedTaskId ?? 'none'}</p>
+            </div>
+          </div>
+          {isLoadingArtifacts ? (
+            <div className="rounded-xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">Loading task artifacts...</div>
+          ) : !selectedArtifacts ? (
+            <div className="rounded-xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">Choose a task to preview intake, rebuild plan, patch bundle and apply result.</div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ArtifactCard title="Intake Report" content={selectedArtifacts.intake_report} />
+              <ArtifactCard title="Rebuild Plan" content={selectedArtifacts.rebuild_plan} />
+              <ArtifactCard title="Generated Patches" content={selectedArtifacts.generated_patches} />
+              <ArtifactCard title="Apply Result" content={selectedArtifacts.apply_result} />
+            </div>
+          )}
         </div>
 
         <div className="mb-6 flex items-center justify-between">
@@ -320,3 +395,15 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
+const ArtifactCard: React.FC<{ title: string; content?: string }> = ({ title, content }) => (
+  <div className="overflow-hidden rounded-xl border border-slate-200">
+    <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
+      <FileCode2 size={16} />
+      {title}
+    </div>
+    <pre className="max-h-96 overflow-auto whitespace-pre-wrap bg-slate-950 px-4 py-4 text-xs text-slate-100">
+      {content?.trim() || 'No data yet.'}
+    </pre>
+  </div>
+);

@@ -107,3 +107,4 @@ fabrika_Agent/task_queue.json
 frontend/web/*.tsbuildinfo
 frontend/web/vite.config.js
 frontend/web/vite.config.d.ts
+runtime/

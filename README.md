@@ -205,6 +205,8 @@ Bu komut:
 - backend/api-gateway uygulamasini baslatir
 - frontend/web build artefaktlarini gateway uzerinden servis eder
 - tarayicida `http://127.0.0.1:3000` adresini acar
+- web UI icinde project intake, rebuild plan, generated patches ve apply result ekranlarini sunar
+- internet gerektiren intake gorevlerini kuyrukta bekletir ve daha sonra yeniden isleyebilir
 
 Fabrika kontrol merkezini baslatmak icin:
 
@@ -217,8 +219,9 @@ Bu arayuz ile:
 - AGENT stack'i baslatabilirsiniz
 - AGENT web UI'yi acabilirsiniz
 - legacy `yerel_fabrika_gui.py` uygulamasini ayri olarak acabilirsiniz
-- baska proje klasorlerini workspace'e alip intake calistirabilirsiniz
-- internet gerektiren isleri kuyruklayip daha sonra devam ettirebilirsiniz
+- baska proje klasorlerini workspace'e alip ortak rebuild pipeline'ina gonderebilirsiniz
+- rebuild plan / generated patches / apply result ciktilarini gorebilirsiniz
+- internet gerektiren isleri kuyruklayip otomatik retry/backoff ile daha sonra devam ettirebilirsiniz
 
 ### Var Olan Projeyi Iceri Alma (Intake)
 

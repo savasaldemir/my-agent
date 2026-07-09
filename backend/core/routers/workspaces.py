@@ -35,6 +35,13 @@ class ProcessQueueResponse(BaseModel):
     processed: List[TaskResponse]
 
 
+class TaskArtifactsResponse(BaseModel):
+    intake_report: Optional[str] = None
+    rebuild_plan: Optional[str] = None
+    generated_patches: Optional[str] = None
+    apply_result: Optional[str] = None
+
+
 def _to_response(task: WorkspaceTask) -> TaskResponse:
     return TaskResponse(**task.__dict__)
 
@@ -63,9 +70,27 @@ async def process_queue() -> ProcessQueueResponse:
     return ProcessQueueResponse(processed=[_to_response(task) for task in processed])
 
 
+@router.post("/tasks/{task_id}/run", response_model=TaskResponse)
+async def run_task(task_id: str) -> TaskResponse:
+    try:
+        task = workspace_service.process_task(task_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _to_response(task)
+
+
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
 async def get_task(task_id: str) -> TaskResponse:
     task = workspace_service.get_task(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return _to_response(task)
+
+
+@router.get("/tasks/{task_id}/artifacts", response_model=TaskArtifactsResponse)
+async def get_task_artifacts(task_id: str) -> TaskArtifactsResponse:
+    try:
+        artifacts = workspace_service.read_artifacts(task_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return TaskArtifactsResponse(**artifacts)

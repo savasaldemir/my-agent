@@ -33,11 +33,23 @@ export interface WorkspaceTask {
   prompt: string;
   requires_internet: boolean;
   status: string;
+  phase: string;
   created_at: string;
   updated_at: string;
   retry_count: number;
+  next_retry_at?: string | null;
   last_error?: string | null;
   report_path?: string | null;
+  plan_path?: string | null;
+  patches_path?: string | null;
+  apply_summary_path?: string | null;
+}
+
+export interface WorkspaceArtifacts {
+  intake_report?: string;
+  rebuild_plan?: string;
+  generated_patches?: string;
+  apply_result?: string;
 }
 
 const api = axios.create({
@@ -84,7 +96,9 @@ export const workspaceService = {
       requires_internet: requiresInternet,
     }),
   processQueue: () => api.post<{ processed: WorkspaceTask[] }>('/workspaces/tasks/process'),
+  runTask: (taskId: string) => api.post<WorkspaceTask>(`/workspaces/tasks/${taskId}/run`),
   getTask: (taskId: string) => api.get<WorkspaceTask>(`/workspaces/tasks/${taskId}`),
+  getArtifacts: (taskId: string) => api.get<WorkspaceArtifacts>(`/workspaces/tasks/${taskId}/artifacts`),
 };
 
 export default api;
